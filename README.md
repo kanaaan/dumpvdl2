@@ -1,7 +1,7 @@
 # dumpvdl2
 
 dumpvdl2 is a VDL Mode 2 message decoder and protocol analyzer (fork from [dumpvdl2](https://github.com/szpajder/dumpvdl2)).
-This fork transform the dumpvdl2 to a UDP generator for AVLC Frames
+This fork transforms the dumpvdl2 to a UDP generator for AVLC Frames
 
 ### Added Features
 
