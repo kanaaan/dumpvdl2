@@ -1,6 +1,6 @@
 # dumpvdl2
 
-dumpvdl2 is a VDL Mode 2 message decoder and protocol analyzer (fork from [dumpvdl2](https://github.com/szpajder/dumpvdl2).
+dumpvdl2 is a VDL Mode 2 message decoder and protocol analyzer (fork from [dumpvdl2])(https://github.com/szpajder/dumpvdl2).
 This fork transform the dumpvdl2 to a UDP generator for AVLC Frames
 
 ### Added Features
@@ -18,7 +18,7 @@ This fork transform the dumpvdl2 to a UDP generator for AVLC Frames
 ![dumpvdl2 screenshot](putty-console.png?raw=true)
 
 
-Generated UDP frames can be verified under Linux using the tcpdump tool: or using the python script avlc-udp.py
+Generated UDP frames can be verified under Linux using the tcpdump tool or using the python script [avlc-udp.py](https://github.com/kanaaan/dumpvdl2/blob/master/avlc-udp.py)
 
 ```
 tcpdump -vx  -i lo udp port 8090
