@@ -39,7 +39,8 @@ int do_exit = 0;
 uint32_t msg_filter = MSGFLT_ALL;
 
 void sighandler(int sig) {
-	fprintf(stderr, "Got signal %d, exiting\n", sig);
+	fprintf(stderr, "Got signal %d", sig);
+	printf(RESET ", exiting\n");
 	do_exit = 1;
 #if WITH_RTLSDR
 	rtl_cancel();
@@ -136,6 +137,8 @@ void usage() {
 	fprintf(stderr, "\t--daily\t\t\t\tRotate output file daily\n");
 	fprintf(stderr, "\t--utc\t\t\t\tUse UTC timestamps in output and file names\n");
 	fprintf(stderr, "\t--raw-frames\t\t\tOutput AVLC payload as raw bytes\n");
+	fprintf(stderr, "\t--raw-frames-udp\t\t\tBroadcast AVLC frames as raw bytes to UDP localhost:8080 (this option disable decoding and logs generation)\n");
+	fprintf(stderr, "\t--udp-port <udp_port>\t\t\tConfigure the UDP port (default 8080)\n");
 	fprintf(stderr, "\t--dump-asn1\t\t\tOutput full ASN.1 structure of CM and CPDLC messages\n");
 	fprintf(stderr, "\t--msg-filter <filter_spec>\tMessage types to display (default: all) (\"--msg-filter help\" for details)\n");
 	fprintf(stderr, "\t--output-acars-pp <host:port>\tSend ACARS messages to Planeplotter over UDP/IP\n");
@@ -276,6 +279,7 @@ static uint32_t parse_msg_filterspec(char *filterspec) {
 int main(int argc, char **argv) {
 	vdl2_state_t ctx;
 	uint32_t centerfreq = 0, sample_rate = 0, oversample = 0;
+	int udp_port=8080;
 	uint32_t *freqs;
 	int num_channels = 0;
 	enum input_types input = INPUT_UNDEF;
@@ -303,6 +307,8 @@ int main(int argc, char **argv) {
 		{ "hourly",		no_argument,		NULL, 	__OPT_HOURLY },
 		{ "utc",		no_argument,		NULL,	__OPT_UTC },
 		{ "raw-frames",		no_argument,		NULL,	__OPT_RAW_FRAMES },
+		{ "raw-frames-udp",		no_argument,		NULL,	__OPT_RAW_FRAMES_UDP },
+		{ "udp-port",		required_argument,		NULL,	__OPT_UDP_PORT },
 		{ "dump-asn1",		no_argument,		NULL,	__OPT_DUMP_ASN1 },
 		{ "output-file",	required_argument,	NULL,	__OPT_OUTPUT_FILE },
 		{ "iq-file",		required_argument,	NULL,	__OPT_IQ_FILE },
@@ -375,6 +381,12 @@ int main(int argc, char **argv) {
 			break;
 		case __OPT_RAW_FRAMES:
 			output_raw_frames = 1;
+			break;
+		case __OPT_UDP_PORT:
+			udp_port = atoi(optarg);
+			break;
+		case __OPT_RAW_FRAMES_UDP:
+			output_raw_frames_only = 1;
 			break;
 		case __OPT_DUMP_ASN1:
 			dump_asn1 = 1;
@@ -457,6 +469,13 @@ int main(int argc, char **argv) {
 			usage();
 		}
 	}
+	if (output_raw_frames_only == 1)
+	{
+		if (init_udp(udp_port) < 0) {
+			fprintf(stderr, "Failed to initialize output socket to udp - disabling it\n");
+		}
+	}
+
 	if(input == INPUT_UNDEF)
 		usage();
 

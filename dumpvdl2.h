@@ -29,6 +29,12 @@
 #ifndef DUMPVDL2_VERSION
 #define DUMPVDL2_VERSION "1.3.1"
 #endif
+
+#define RED     "\033[31m"      /* Red */
+#define GREEN   "\033[32m"      /* Green */
+#define RESET   "\033[0m"		/* Reset*/
+
+
 #define RS_K 249	// Reed-Solomon vector length (bytes)
 #define RS_N 255	// Reed-Solomon codeword length (bytes)
 #define BSLEN 32768UL
@@ -90,6 +96,8 @@
 #define __OPT_UTC			17
 #define __OPT_RAW_FRAMES		18
 #define __OPT_DUMP_ASN1			19
+#define __OPT_RAW_FRAMES_UDP	20
+#define __OPT_UDP_PORT			21
 
 #ifdef WITH_SDRPLAY
 #define __OPT_SDRPLAY			80
@@ -252,10 +260,13 @@ int rs_verify(uint8_t *data, int fec_octets);
 
 // output.c
 extern FILE *outf;
-extern uint8_t hourly, daily, utc, output_raw_frames, dump_asn1;
+extern uint8_t hourly, daily, utc, output_raw_frames, dump_asn1, output_raw_frames_only;
+extern int sockfd_udp;
 extern int pp_sockfd;
 int init_output_file(char *file);
 int init_pp(char *pp_addr);
+int init_udp();
+int send_udp(time_t t,uint32_t freq,char is_valid,uint32_t datalen,void *data);
 int rotate_outfile();
 void output_raw(uint8_t *buf, uint32_t len);
 

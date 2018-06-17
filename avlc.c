@@ -227,6 +227,33 @@ void output_avlc(vdl2_channel_t *v, const avlc_frame_t *f, uint8_t *raw_buf, uin
 	strftime(ftime, sizeof(ftime), "%F %T %Z", (utc ? gmtime(&f->t) : localtime(&f->t)));
 	float sig_pwr_dbfs = 20.0f * log10f(v->mag_frame);
 	float nf_pwr_dbfs = 20.0f * log10f(v->mag_nf + 0.001f);
+	
+	if (output_raw_frames_only)
+	{
+
+		uint8_t *raw_buf_avlc = raw_buf - 9;
+		len += 9;
+		
+		if (f->data_valid == 1)
+			printf(GREEN);
+		else
+			printf(RED);
+
+		printf("\n [%s] [%.3f] [%.1f/%.1f dBFS] [%.1f dB] [Valid =%d] [len =%d] \n",
+			ftime, (float)v->freq / 1e+6, sig_pwr_dbfs, nf_pwr_dbfs, sig_pwr_dbfs - nf_pwr_dbfs, f->data_valid,len);
+		output_raw_udp(raw_buf_avlc, len);
+		
+		// Creating socket file descriptor
+		if (sockfd_udp>0)
+		{
+			//send_udp(time_t t,uint32_t freq,char is_valid,uint32_t datalen,void *data);
+			send_udp(f->t,v->freq,f->data_valid,len,raw_buf_avlc);
+		}
+		return;
+	}
+
+	
+	
 	fprintf(outf, "\n[%s] [%.3f] [%.1f/%.1f dBFS] [%.1f dB]\n",
 		ftime, (float)v->freq / 1e+6, sig_pwr_dbfs, nf_pwr_dbfs, sig_pwr_dbfs-nf_pwr_dbfs);
 	fprintf(outf, "%06X (%s, %s) -> %06X (%s): %s\n",

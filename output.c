@@ -27,10 +27,19 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include "dumpvdl2.h"
+// UDP client header
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 FILE *outf;
 int pp_sockfd = 0;
-uint8_t hourly = 0, daily = 0, utc = 0, output_raw_frames = 0, dump_asn1 = 0;
+uint8_t hourly = 0, daily = 0, utc = 0, output_raw_frames = 0, dump_asn1 = 0, output_raw_frames_only = 0;
+//UDP broadcast
+int sockfd_udp = -1;
+struct sockaddr_in     udp_servaddr;
+//UDP broadcast //
+
 static char *filename_prefix = NULL;
 static char *extension = NULL;
 static size_t prefix_len;
@@ -130,6 +139,61 @@ int init_pp(char *pp_addr) {
 	return 0;
 }
 
+int init_udp(int udp_port)
+{
+	memset(&udp_servaddr, 0, sizeof(udp_servaddr));
+	// Filling server information
+	udp_servaddr.sin_family = AF_INET;
+	udp_servaddr.sin_port = htons(udp_port);
+	udp_servaddr.sin_addr.s_addr = INADDR_ANY;
+
+	if ((sockfd_udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		fprintf(stderr, "socket creation failed");
+		return -1;
+	}
+	printf(GREEN "udp socket initialized, send frames to localhost:%d", udp_port);
+	printf(RESET"\n");
+	return 0;
+}
+int send_udp(time_t t,uint32_t freq,char is_valid,uint32_t datalen,void *data)
+{
+	static unsigned char udp_buff[4048];
+	static uint64_t seq=0; 
+	unsigned char *ptr_udp_buff=udp_buff;
+	uint32_t udp_len=0;
+	//Sequence number
+	seq++;
+	memcpy(ptr_udp_buff,(void *)&seq,sizeof(uint64_t));
+	ptr_udp_buff+=sizeof(uint64_t);
+	udp_len+=sizeof(uint64_t);
+	//frequency
+	memcpy(ptr_udp_buff,(void *)&freq,sizeof(uint32_t));
+	ptr_udp_buff+=sizeof(uint32_t);
+	udp_len+=sizeof(uint32_t);
+	//is_valid
+	memcpy(ptr_udp_buff,(void *)&is_valid,sizeof(char));
+	ptr_udp_buff+=sizeof(char);
+	udp_len+=sizeof(char);
+	//time
+	memcpy(ptr_udp_buff,(void *)&t,sizeof(time_t));
+	ptr_udp_buff+=sizeof(time_t);
+	udp_len+=sizeof(time_t);
+	//Length
+	memcpy(ptr_udp_buff,(void *)&datalen,sizeof(uint32_t));
+	ptr_udp_buff+=sizeof(uint32_t);
+	udp_len+=sizeof(uint32_t);
+	//data
+	memcpy(ptr_udp_buff,(void *)data,datalen);
+	ptr_udp_buff+=datalen;
+	udp_len+=datalen;
+	
+	sendto(sockfd_udp, (const char *)udp_buff, udp_len,
+		0, (const struct sockaddr *) &udp_servaddr,
+		sizeof(udp_servaddr));
+	
+	return 0;
+}
+
 int rotate_outfile() {
 	struct tm new_tm;
 	time_t t = time(NULL);
@@ -152,3 +216,13 @@ void output_raw(uint8_t *buf, uint32_t len) {
 		fprintf(outf, "%02x ", buf[i]);
 	fprintf(outf, "\n");
 }
+
+void output_raw_udp(uint8_t *buf, uint32_t len) {
+	if (len == 0)
+		return;
+	printf("  ");
+	for (int i = 0; i < len; i++)
+		printf("%02x ", buf[i]);
+	printf("\n");
+}
+
