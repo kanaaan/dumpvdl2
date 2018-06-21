@@ -29,4 +29,11 @@ tcpdump -vx  -i lo udp port 8090
 python avlc-udp.py
 
 ```
- 
+### Compilation under Linux raspberrypi 4.14.34-v7+
+
+```
+sudo apt-get install librtlsdr-dev
+git clone https://github.com/kanaaan/dumpvdl2
+cd dumpvdl2
+make
+```
