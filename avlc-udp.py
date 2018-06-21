@@ -14,7 +14,7 @@ sock.bind(server_address)
 # https://docs.python.org/3/library/struct.html
 unpacker_QI = struct.Struct('QI')
 unpacker_b = struct.Struct('?')
-unpackerII = struct.Struct('II')
+unpackerIII = struct.Struct('III')
 
 while True:
     data, address = sock.recvfrom(4096)
@@ -27,8 +27,9 @@ while True:
     print >>sys.stderr, 'Freq:', unpacked_data[1]
     unpacked_data = unpacker_b.unpack(data[12:12+1])
     print >>sys.stderr, 'is_valid:', unpacked_data[0]
-    unpacked_data = unpackerII.unpack(data[13:13+8])
-    print >>sys.stderr, 'time:', unpacked_data[0]
-    print >>sys.stderr, 'Len:', unpacked_data[1]
+    unpacked_data = unpackerIII.unpack(data[13:13+12])
+    print >>sys.stderr, 'time_sec:', unpacked_data[0]
+    print >>sys.stderr, 'time_usec:', unpacked_data[1]
+    print >>sys.stderr, 'Len:', unpacked_data[2]
 
-    print >>sys.stderr, 'data: %s' % binascii.hexlify(data[21:21+unpacked_data[1]])
+    print >>sys.stderr, 'data: %s' % binascii.hexlify(data[25:25+unpacked_data[1]])

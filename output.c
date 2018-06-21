@@ -155,7 +155,7 @@ int init_udp(int udp_port)
 	printf(RESET"\n");
 	return 0;
 }
-int send_udp(time_t t,uint32_t freq,char is_valid,uint32_t datalen,void *data)
+int send_udp(uint32_t tv_sec,uint32_t tv_usec,uint32_t freq,char is_valid,uint32_t datalen,void *data)
 {
 	static unsigned char udp_buff[4048];
 	static uint64_t seq=0; 
@@ -175,9 +175,14 @@ int send_udp(time_t t,uint32_t freq,char is_valid,uint32_t datalen,void *data)
 	ptr_udp_buff+=sizeof(char);
 	udp_len+=sizeof(char);
 	//time
-	memcpy(ptr_udp_buff,(void *)&t,sizeof(time_t));
-	ptr_udp_buff+=sizeof(time_t);
-	udp_len+=sizeof(time_t);
+	memcpy(ptr_udp_buff,(void *)&tv_sec,sizeof(uint32_t));
+	ptr_udp_buff+=sizeof(uint32_t);
+	udp_len+=sizeof(uint32_t);
+	
+	memcpy(ptr_udp_buff,(void *)&tv_usec,sizeof(uint32_t));
+	ptr_udp_buff+=sizeof(uint32_t);
+	udp_len+=sizeof(uint32_t);
+	
 	//Length
 	memcpy(ptr_udp_buff,(void *)&datalen,sizeof(uint32_t));
 	ptr_udp_buff+=sizeof(uint32_t);

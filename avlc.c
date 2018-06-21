@@ -92,6 +92,12 @@ static void parse_avlc(vdl2_channel_t *v, uint8_t *buf, uint32_t len) {
 	avlc_frame_t frame;
 	uint32_t msg_type = 0;
 	frame.t = time(NULL);
+	// Retrieves the current Coordinated Universal Time (UTC) 
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+	frame.tv_sec = tv.tv_sec;
+	frame.tv_usec = tv.tv_usec;
+	
 	frame.dst.val = parse_dlc_addr(ptr);
 	ptr += 4; len -= 4;
 	frame.src.val = parse_dlc_addr(ptr);
@@ -224,6 +230,7 @@ void output_avlc(vdl2_channel_t *v, const avlc_frame_t *f, uint8_t *raw_buf, uin
 	if((daily || hourly) && rotate_outfile() < 0)
 		_exit(1);
 	char ftime[30];
+	
 	strftime(ftime, sizeof(ftime), "%F %T %Z", (utc ? gmtime(&f->t) : localtime(&f->t)));
 	float sig_pwr_dbfs = 20.0f * log10f(v->mag_frame);
 	float nf_pwr_dbfs = 20.0f * log10f(v->mag_nf + 0.001f);
@@ -239,15 +246,15 @@ void output_avlc(vdl2_channel_t *v, const avlc_frame_t *f, uint8_t *raw_buf, uin
 		else
 			printf(RED);
 
-		printf("\n [%s] [%.3f] [%.1f/%.1f dBFS] [%.1f dB] [Valid =%d] [len =%d] \n",
-			ftime, (float)v->freq / 1e+6, sig_pwr_dbfs, nf_pwr_dbfs, sig_pwr_dbfs - nf_pwr_dbfs, f->data_valid,len);
+		printf("\n [%s] [%d µsec] [%.3f] [%.1f/%.1f dBFS] [%.1f dB] [Valid =%d] [len =%d] \n",
+			ftime,f->tv_usec, (float)v->freq / 1e+6, sig_pwr_dbfs, nf_pwr_dbfs, sig_pwr_dbfs - nf_pwr_dbfs, f->data_valid,len);
 		output_raw_udp(raw_buf_avlc, len);
 		
 		// Creating socket file descriptor
 		if (sockfd_udp>0)
 		{
 			//send_udp(time_t t,uint32_t freq,char is_valid,uint32_t datalen,void *data);
-			send_udp(f->t,v->freq,f->data_valid,len,raw_buf_avlc);
+			send_udp(f->tv_sec,f->tv_usec,v->freq,f->data_valid,len,raw_buf_avlc);
 		}
 		return;
 	}

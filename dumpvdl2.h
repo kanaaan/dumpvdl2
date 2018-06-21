@@ -266,9 +266,10 @@ extern int pp_sockfd;
 int init_output_file(char *file);
 int init_pp(char *pp_addr);
 int init_udp();
-int send_udp(time_t t,uint32_t freq,char is_valid,uint32_t datalen,void *data);
+int send_udp(uint32_t tv_sec,uint32_t tv_usec,uint32_t freq,char is_valid,uint32_t datalen,void *data);
 int rotate_outfile();
 void output_raw(uint8_t *buf, uint32_t len);
+void output_raw_udp(uint8_t *buf, uint32_t len);
 
 // statsd.c
 #if USE_STATSD

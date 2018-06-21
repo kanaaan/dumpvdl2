@@ -108,6 +108,8 @@ typedef union {
 enum avlc_protocols { PROTO_X25, PROTO_ACARS, PROTO_UNKNOWN };
 typedef struct {
 	time_t t;
+	uint32_t tv_sec;
+	uint32_t tv_usec;
 	avlc_addr_t src;
 	avlc_addr_t dst;
 	lcf_t lcf;
