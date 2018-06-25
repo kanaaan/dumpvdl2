@@ -29,11 +29,22 @@ tcpdump -vx  -i lo udp port 8090
 python avlc-udp.py
 
 ```
-### Compilation under Linux raspberrypi 4.14.34-v7+
+### RTLSDR testing, compilation under Linux raspberrypi 4.14.34-v7+
 
 ```
 sudo apt-get install librtlsdr-dev
 git clone https://github.com/kanaaan/dumpvdl2
 cd dumpvdl2
 make
+```
+
+
+### SDRplay-RSPduo testing, compilation under Linux raspberrypi 4.14.34-v7+
+
+Install [driver](https://www.sdrplay.com/downloads) from (Raspberry Pi section) and execute the SDRplay_RSP_API-RPi-2.13.1.run script (chmod +x required)
+```
+git clone https://github.com/kanaaan/dumpvdl2
+cd dumpvdl2
+make WITH_SDRPLAY=1 WITH_RTLSDR=0
+dumpvdl2 --sdrplay 0  --antenna A --biast 0 --notch-filter 1 136725000 136975000 136875000
 ```
