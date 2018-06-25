@@ -30,21 +30,25 @@ static int initialized = 0;
 static int lnaGRtables[NUM_HW_TYPES][NUM_LNA_STATES] = {
 	[HW_RSP1]  = { 0, 24, 19, 43, 0, 0, 0, 0, 0, 0 },
 	[HW_RSP2]  = { 0, 10, 15, 21, 24, 34, 39, 45, 64, 0 },
-	[HW_RSP1A] = { 0, 6, 12, 18, 20, 26, 32, 38, 57, 62 }
+	[HW_RSP1A] = { 0, 6, 12, 18, 20, 26, 32, 38, 57, 62 },
+	[HW_RSP2duo]  = { 0, 10, 15, 21, 24, 34, 39, 45, 64, 0 }
 };
 static int num_lnaGRs[NUM_HW_TYPES] = {
 	[HW_RSP1] = 4,
 	[HW_RSP2] = 9,
-	[HW_RSP1A] = 10
+	[HW_RSP1A] = 10,
+	[HW_RSP2duo] = 9
 };
 static char *hw_descr[NUM_HW_TYPES] = {
 	[HW_RSP1] = "RSP1",
 	[HW_RSP2] = "RSP2",
-	[HW_RSP1A] = "RSP1A"
+	[HW_RSP1A] = "RSP1A",
+	[HW_RSP2duo] = "RSP2duo",
 };
 
+
 static void sdrplay_streamCallback(short *xi, short *xq, unsigned int firstSampleNum, int grChanged,
-int rfChanged, int fsChanged, unsigned int numSamples, unsigned int reset, void *cbContext) {
+int rfChanged, int fsChanged, unsigned int numSamples, unsigned int reset, unsigned int hwRemoved, void *cbContext) {
 	int i, j, count1, count2, new_buf_flag;
 	int end, input_index;
 	sdrplay_ctx_t *SDRPlay = (sdrplay_ctx_t*)cbContext;
@@ -100,6 +104,14 @@ int rfChanged, int fsChanged, unsigned int numSamples, unsigned int reset, void 
 		process_buf_short(&SDRPlay->sdrplay_data[end * sizeof(short)], ASYNC_BUF_SIZE * sizeof(short), SDRPlay->context);
 	}
 }
+
+
+static void sdrplay_streamCallback_legacy(short *xi, short *xq, unsigned int firstSampleNum, int grChanged,
+int rfChanged, int fsChanged, unsigned int numSamples, unsigned int reset, void *cbContext) {
+	
+	return sdrplay_streamCallback(xi, xq, firstSampleNum, grChanged,rfChanged, fsChanged, numSamples, reset, 0, cbContext);
+}
+
 
 static void sdrplay_gainCallback(unsigned int gRdB, unsigned int lnaGRdB, void *cbContext) {
 	debug_print("Gain change: gRdb=%d lnaGRdB=%d \n", gRdB, lnaGRdB);
@@ -165,6 +177,8 @@ dev_found:
 		*hw_type = HW_RSP1;
 	} else if(devices[devIdx].hwVer == 2) {
 		*hw_type = HW_RSP2;
+	} else if(devices[devIdx].hwVer == 3) {
+		*hw_type = HW_RSP2duo;
 	} else if(devices[devIdx].hwVer > 253) {
 		*hw_type = HW_RSP1A;
 	} else {
@@ -173,11 +187,13 @@ dev_found:
 		return -1;
 	}
 
-	fprintf(stderr, "Selected device #%d (type: %s SN: %s)\n",
+	fprintf(stderr, "Selected device #%d (type: %s SN: %s Hardware_version: %d)\n",
 		devIdx,
 		hw_descr[*hw_type],
-		(devices[devIdx].SerNo != NULL ? devices[devIdx].SerNo : "unknown")
+		(devices[devIdx].SerNo != NULL ? devices[devIdx].SerNo : "unknown"),
+		devices[devIdx].hwVer
 	);
+	
 	return devIdx;
 }
 
@@ -209,7 +225,7 @@ int const enable_notch_filter, int enable_agc) {
 		_exit(1);
 	}
 
-	if(hw_type == HW_RSP2) {
+	if((hw_type == HW_RSP2) || (hw_type == HW_RSP2duo) ) {
 		if(enable_biast) {
 			fprintf(stderr, "Bias-T activated\n");
 			err = mir_sdr_RSPII_BiasTControl(1);
@@ -294,7 +310,7 @@ int const enable_notch_filter, int enable_agc) {
 
 	err = mir_sdr_StreamInit (&gRdb, (double)SDRPLAY_RATE/1e6, (double)freq/1e6, mir_sdr_BW_1_536, mir_sdr_IF_Zero,
 		lna_state, &gRdBsystem, mir_sdr_USE_RSP_SET_GR, &sdrplaySamplesPerPacket,
-		sdrplay_streamCallback, sdrplay_gainCallback, &SDRPlay);
+		(hw_type == HW_RSP2duo)?sdrplay_streamCallback:sdrplay_streamCallback_legacy, sdrplay_gainCallback, &SDRPlay);
 	if(err != mir_sdr_Success) {
 		fprintf(stderr, "Unable to initialize RSP stream, error %d\n", err);
 		_exit(1);

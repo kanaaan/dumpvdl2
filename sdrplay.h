@@ -39,9 +39,10 @@ typedef enum {
 	HW_UNKNOWN	= 0,
 	HW_RSP1		= 1,
 	HW_RSP2		= 2,
-	HW_RSP1A	= 3
+	HW_RSP1A	= 3,
+	HW_RSP2duo	= 4 //https://www.sdrplay.com/rspduo/
 } sdrplay_hw_type;
-#define NUM_HW_TYPES 4
+#define NUM_HW_TYPES 5
 
 void sdrplay_init(vdl2_state_t * const ctx, char * const dev, char * const antenna,
 	uint32_t const freq, int const gr, int const ppm_error,	int const enable_biast,
