@@ -31,13 +31,25 @@ python avlc-udp.py
 ```
 ### RTLSDR testing, compilation under Linux raspberrypi 4.14.34-v7+
 
+Install dependencies and clone/compile dumpvdl2
 ```
 sudo apt-get install librtlsdr-dev
+sudo apt-get install libglib2.0-dev
 git clone https://github.com/kanaaan/dumpvdl2
 cd dumpvdl2
 make
 ```
 
+if you got the following error, simply restart the Raspberry ! 
+```
+Found 1 device(s):
+  0:  Failed to query data
+
+Using device 0: Generic RTL2832U OEM
+usb_open error -3
+Please fix the device permissions, e.g. by installing the udev rules file rtl-sdr.rules
+Failed to open rtlsdr device #0: error -3
+```
 
 ### SDRplay-RSPduo testing, compilation under Linux raspberrypi 4.14.34-v7+
 
